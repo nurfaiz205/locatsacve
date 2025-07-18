@@ -124,7 +124,7 @@
     </style>
 </head>
 <body>
-    <h1>Form Pendaftaran (Penyimpanan Lokal)</h1>
+    <h1>Form GitHub Pages (Penyimpanan Lokal)</h1>
     
     <div class="tab">
         <button class="tablinks active" onclick="openTab(event, 'input')">Input Data</button>
@@ -198,16 +198,7 @@
         if (window.location.host.includes('github.io')) {
             document.querySelector('h1').textContent += ' (GitHub Pages Version)';
         }
-
-        // JavaScript lainnya tetap sama
-        let formData = [];
-        
-        function loadData() {
-            const savedData = localStorage.getItem('formData');
-            formData = savedData ? JSON.parse(savedData) : [];
-            renderTable();
-        }
-        
+ 
         // Data akan disimpan di sini
         let formData = [];
         
