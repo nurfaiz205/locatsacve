@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Sederhana dengan Penyimpanan Lokal</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button.secondary {
+            background-color: #f0ad4e;
+        }
+        button.secondary:hover {
+            background-color: #ec971f;
+        }
+        button.danger {
+            background-color: #d9534f;
+        }
+        button.danger:hover {
+            background-color: #c9302c;
+        }
+        .message {
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            border-radius: 4px 4px 0 0;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            color: black;
+            margin: 0;
+            border-radius: 0;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+        }
+        .tabcontent.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Form Pendaftaran (Penyimpanan Lokal)</h1>
+    
+    <div class="tab">
+        <button class="tablinks active" onclick="openTab(event, 'input')">Input Data</button>
+        <button class="tablinks" onclick="openTab(event, 'view')">Lihat Data</button>
+    </div>
+    
+    <!-- Tab Input Data -->
+    <div id="input" class="tabcontent active">
+        <form id="myForm">
+            <div class="form-group">
+                <label for="nama">Nama Lengkap:</label>
+                <input type="text" id="nama" name="nama" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="telepon">Nomor Telepon:</label>
+                <input type="tel" id="telepon" name="telepon">
+            </div>
+            
+            <div class="form-group">
+                <label for="jenis_kelamin">Jenis Kelamin:</label>
+                <select id="jenis_kelamin" name="jenis_kelamin" required>
+                    <option value="">Pilih</option>
+                    <option value="Laki-laki">Laki-laki</option>
+                    <option value="Perempuan">Perempuan</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="alamat">Alamat:</label>
+                <textarea id="alamat" name="alamat" rows="3"></textarea>
+            </div>
+            
+            <button type="submit">Simpan Data</button>
+        </form>
+        
+        <div id="message" class="message" style="display: none;"></div>
+    </div>
+    
+    <!-- Tab Lihat Data -->
+    <div id="view" class="tabcontent">
+        <button id="downloadBtn" class="secondary">Download Excel</button>
+        <button id="clearAllBtn" class="danger">Hapus Semua Data</button>
+        
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Tanggal</th>
+                    <th>Nama</th>
+                    <th>Email</th>
+                    <th>Telepon</th>
+                    <th>Jenis Kelamin</th>
+                    <th>Alamat</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Data akan dimasukkan di sini oleh JavaScript -->
+            </tbody>
+        </table>
+    </div>
+    
+    <script>
+        // Data akan disimpan di sini
+        let formData = [];
+        
+        // Inisialisasi data dari localStorage
+        function loadData() {
+            const savedData = localStorage.getItem('formData');
+            formData = savedData ? JSON.parse(savedData) : [];
+            renderTable();
+        }
+        
+        // Simpan data ke localStorage
+        function saveData() {
+            localStorage.setItem('formData', JSON.stringify(formData));
+        }
+        
+        // Tampilkan pesan
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Render tabel data
+        function renderTable() {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            
+            if (formData.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="8" style="text-align: center;">Tidak ada data</td>`;
+                tableBody.appendChild(row);
+                return;
+            }
+            
+            formData.forEach((data, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${data.timestamp}</td>
+                    <td>${data.nama}</td>
+                    <td>${data.email}</td>
+                    <td>${data.telepon || '-'}</td>
+                    <td>${data.jenis_kelamin}</td>
+                    <td>${data.alamat || '-'}</td>
+                    <td class="action-buttons">
+                        <button onclick="deleteData(${index})" class="danger">Hapus</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Hapus data
+        function deleteData(index) {
+            if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+                formData.splice(index, 1);
+                saveData();
+                renderTable();
+                showMessage('Data berhasil dihapus', 'success');
+            }
+        }
+        
+        // Hapus semua data
+        function clearAllData() {
+            if (formData.length === 0) {
+                showMessage('Tidak ada data untuk dihapus', 'error');
+                return;
+            }
+            
+            if (confirm('Apakah Anda yakin ingin menghapus SEMUA data?')) {
+                formData = [];
+                saveData();
+                renderTable();
+                showMessage('Semua data berhasil dihapus', 'success');
+            }
+        }
+        
+        // Download Excel
+        function downloadExcel() {
+            if (formData.length === 0) {
+                showMessage('Tidak ada data untuk didownload', 'error');
+                return;
+            }
+            
+            // Buat worksheet
+            const ws = XLSX.utils.json_to_sheet(formData);
+            
+            // Buat workbook
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Data Form");
+            
+            // Export ke file Excel
+            XLSX.writeFile(wb, "data_form.xlsx");
+            
+            showMessage('File Excel berhasil didownload!', 'success');
+        }
+        
+        // Fungsi untuk tab
+        function openTab(evt, tabName) {
+            const tabcontent = document.getElementsByClassName("tabcontent");
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].classList.remove("active");
+            }
+            
+            const tablinks = document.getElementsByClassName("tablinks");
+            for (let i = 0; i < tablinks.length; i++) {
+                tablinks[i].classList.remove("active");
+            }
+            
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+            
+            if (tabName === 'view') {
+                renderTable();
+            }
+        }
+        
+        // Event Listeners
+        document.getElementById('myForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const form = e.target;
+            const data = {
+                timestamp: new Date().toLocaleString(),
+                nama: form.nama.value,
+                email: form.email.value,
+                telepon: form.telepon.value,
+                jenis_kelamin: form.jenis_kelamin.value,
+                alamat: form.alamat.value
+            };
+            
+            formData.push(data);
+            saveData();
+            
+            showMessage('Data berhasil disimpan!', 'success');
+            form.reset();
+        });
+        
+        document.getElementById('downloadBtn').addEventListener('click', downloadExcel);
+        document.getElementById('clearAllBtn').addEventListener('click', clearAllData);
+        
+        // Load data saat halaman dimuat
+        window.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>
