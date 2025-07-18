@@ -194,6 +194,20 @@
     </div>
     
     <script>
+        
+        if (window.location.host.includes('github.io')) {
+            document.querySelector('h1').textContent += ' (GitHub Pages Version)';
+        }
+
+        // JavaScript lainnya tetap sama
+        let formData = [];
+        
+        function loadData() {
+            const savedData = localStorage.getItem('formData');
+            formData = savedData ? JSON.parse(savedData) : [];
+            renderTable();
+        }
+        
         // Data akan disimpan di sini
         let formData = [];
         
